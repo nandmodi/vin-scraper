@@ -41,7 +41,7 @@ SPREADSHEET_ID = os.environ.get("SPREADSHEET_ID", "1xCeo0hkn9N9mNKTnb2VdaYQ_77Q9
 WORKSHEET_NAME = "website data"
 
 DEFAULT_WAIT    = 8
-DEFAULT_WORKERS = 4
+DEFAULT_WORKERS = 4    # GitHub has full CPU — safe to use 4 workers
 RETRY_WAIT      = 20
 RETRY_WORKERS   = 2
 
@@ -50,6 +50,15 @@ SCHEDULE_INTERVAL_MINS = 0             # no loop — GitHub Actions handles sche
 
 IS_COLAB  = False
 IS_GITHUB = os.environ.get("GITHUB_ACTIONS") == "true"
+
+# Scale workers based on pending count
+# Small batch (< 50)  → 2 workers  (avoid overkill)
+# Medium batch (< 200)→ 4 workers
+# Large batch (200+)  → 6 workers  (GitHub can handle it)
+def _get_workers(total):
+    if total < 50:   return min(2, total)
+    if total < 200:  return min(4, total)
+    return min(6, total)
 
 # ============================================================
 # CONSTANTS
@@ -656,7 +665,7 @@ def main():
 
         rows      = df.to_dict("records")
         total     = len(rows)
-        n_workers = min(DEFAULT_WORKERS, total)
+        n_workers = _get_workers(total)
 
         if total == 0:
             print("  All rows already have images — nothing to scrape.\n")
