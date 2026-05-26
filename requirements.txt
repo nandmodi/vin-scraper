@@ -1,0 +1,8 @@
+selenium
+webdriver-manager
+gspread
+google-auth
+beautifulsoup4
+lxml
+pandas
+tqdm
